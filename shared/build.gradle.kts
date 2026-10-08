@@ -27,6 +27,7 @@ kotlin {
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
         browser()
+        binaries.executable()
     }
     
     android {
@@ -74,6 +75,9 @@ kotlin {
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.ktor.client.logging)
 
+        }
+        wasmJsMain.dependencies {
+            implementation(npm("mapbox-gl", "3.32.0"))
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

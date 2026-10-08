@@ -24,5 +24,8 @@ kotlin {
 
             implementation(libs.compose.ui)
         }
+        wasmJsMain.dependencies {
+            implementation(npm("mapbox-gl", "3.32.0"))
+        }
     }
 }

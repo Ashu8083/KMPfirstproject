@@ -13,6 +13,8 @@ actual fun RiderMap(
     modifier: Modifier,
     riderLocation: Location,
     destinationLocation: Location?,
-    route: List<RoutePoint>
+    route: List<RoutePoint>,
+    is3D: Boolean,
+    mapTheme: String
 ) {
 }
