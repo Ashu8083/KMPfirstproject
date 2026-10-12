@@ -74,7 +74,7 @@ kotlin {
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.ktor.client.logging)
-
+            implementation(libs.ktor.client.webscoket)
         }
         wasmJsMain.dependencies {
             implementation(npm("mapbox-gl", "3.32.0"))

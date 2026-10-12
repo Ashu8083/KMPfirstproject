@@ -5,6 +5,7 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.plugins.defaultRequest
+import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
@@ -27,4 +28,11 @@ val httpClient : HttpClient = HttpClient {
     }
 }
 
+val webSocketClient : HttpClient = HttpClient{
+    install(WebSockets)
+    install(Logging){
+        level = LogLevel.ALL
+    }
+
+}
 

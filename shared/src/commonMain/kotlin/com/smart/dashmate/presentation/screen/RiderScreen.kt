@@ -22,7 +22,8 @@ import com.smart.dashmate.presentation.viewModel.RiderViewModel
 
 @Composable
 fun RiderScreen(
-    onLoginSuccess: () -> Unit
+    onLoginSuccess: () -> Unit,
+    onWebSocketTest: () -> Unit
 ) {
     var riderId by remember {
         mutableStateOf("")
@@ -51,6 +52,13 @@ fun RiderScreen(
             text = "Login",
             onClick = {
                 onLoginSuccess()
+            }
+        )
+
+        AppButton(
+            text = "WebScoketScreen",
+            onClick = {
+                onWebSocketTest()
             }
         )
     }
