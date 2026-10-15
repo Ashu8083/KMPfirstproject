@@ -1,10 +1,13 @@
 package com.smart.dashmate.di
 
 import com.smart.dashmate.data.remote.ApiService
+import com.smart.dashmate.data.remote.RiderWebSocketService
 import com.smart.dashmate.data.remote.WebSocketService
 import com.smart.dashmate.data.remote.httpClient
 import com.smart.dashmate.data.remote.webSocketClient
+import com.smart.dashmate.data.repository.RiderRepository
 import com.smart.dashmate.data.repository.RouterRepository
+import com.smart.dashmate.presentation.viewModel.RiderViewModel
 import com.smart.dashmate.presentation.viewModel.RouteViewModel
 import org.koin.dsl.module
 
@@ -31,6 +34,26 @@ val mapModule = module {
 
 }
 
+val riderModule = module {
+    single {
+        RiderWebSocketService(
+            client = webSocketClient
+        )
+    }
+    single{
+        RiderRepository(
+            riderWebsocketService = get()
+        )
+    }
+
+    single {
+        RiderViewModel(
+            riderRepository = get()
+        )
+    }
+
+}
+
 val webSocketModule = module {
 
     single {
@@ -44,6 +67,7 @@ val webSocketModule = module {
 val appModule = module {
     includes(
         mapModule,
-        webSocketModule
+        webSocketModule,
+        riderModule
     )
 }
