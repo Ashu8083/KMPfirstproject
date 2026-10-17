@@ -18,7 +18,7 @@ private fun setAccessToken(mapboxGlObj: JsAny, token: String): Unit = js("""
 
 private fun createMapInstance(
     mapboxGlObj: JsAny,
-    container: String,
+    container: JsAny,
     style: String,
     lon: Double,
     lat: Double,
@@ -151,6 +151,17 @@ private fun createMapInstance(
             map.on('load', setup3dBuildingsAndLighting);
         }
 
+        const containerEl = (typeof container === 'string') ? document.getElementById(container) : container;
+        if (containerEl && typeof ResizeObserver !== 'undefined') {
+            const ro = new ResizeObserver(function() {
+                if (map && typeof map.resize === 'function') {
+                    map.resize();
+                }
+            });
+            ro.observe(containerEl);
+            map._dashmateResizeObserver = ro;
+        }
+
         setTimeout(function() { map.resize(); }, 200);
 
         return map;
@@ -159,8 +170,28 @@ private fun createMapInstance(
 
 private fun removeMapInstance(mapObj: JsAny): Unit = js("""
     {
-        if (mapObj && typeof mapObj.remove === 'function') {
-            mapObj.remove();
+        if (mapObj) {
+            try {
+                if (mapObj._dashmateResizeObserver && typeof mapObj._dashmateResizeObserver.disconnect === 'function') {
+                    mapObj._dashmateResizeObserver.disconnect();
+                    mapObj._dashmateResizeObserver = null;
+                }
+            } catch(e) {}
+            try {
+                const container = (typeof mapObj.getContainer === 'function') ? mapObj.getContainer() : null;
+                if (typeof mapObj.remove === 'function') {
+                    mapObj.remove();
+                }
+                if (container && container.parentNode) {
+                    container.parentNode.removeChild(container);
+                }
+            } catch(e) {
+                try {
+                    if (typeof mapObj.remove === 'function') {
+                        mapObj.remove();
+                    }
+                } catch(e2) {}
+            }
         }
     }
 """)
@@ -178,8 +209,9 @@ private fun updateMarkersAndRouteJS(
     mapObj: JsAny,
     riderLon: Double,
     riderLat: Double,
-    destLon: Double?,
-    destLat: Double?,
+    hasDest: Boolean,
+    destLon: Double,
+    destLat: Double,
     coordinatesJson: String
 ): Unit = js("""
     {
@@ -242,7 +274,7 @@ private fun updateMarkersAndRouteJS(
         mapObj._dashmateMarkers.push(riderMarker);
 
         // 2. Custom Destination Marker Element (Crimson Flag Badge)
-        if (destLon !== null && destLat !== null && destLon !== undefined && destLat !== undefined) {
+        if (hasDest) {
             const destEl = document.createElement('div');
             destEl.className = 'dashmate-dest-marker';
             destEl.innerHTML = `
@@ -371,6 +403,34 @@ private fun updateMarkersAndRouteJS(
 """)
 
 private var currentMap: JsAny? = null
+private var currentContainerId: String? = null
+
+fun initializeMap(
+    container: JsAny,
+    accessToken: String,
+    longitude: Double,
+    latitude: Double,
+    zoom: Double = 15.5,
+    pitch: Double = 60.0,
+    bearing: Double = -17.6
+) {
+    if (currentMap != null) {
+        destroyMap()
+    }
+
+    setAccessToken(mapboxgl, accessToken)
+
+    currentMap = createMapInstance(
+        mapboxGlObj = mapboxgl,
+        container = container,
+        style = "mapbox://styles/mapbox/streets-v12",
+        lon = longitude,
+        lat = latitude,
+        zoom = zoom,
+        pitch = pitch,
+        bearing = bearing
+    )
+}
 
 fun initializeMap(
     containerId: String,
@@ -381,12 +441,17 @@ fun initializeMap(
     pitch: Double = 60.0,
     bearing: Double = -17.6
 ) {
+    if (currentMap != null && currentContainerId != containerId) {
+        destroyMap()
+    }
+
     if (currentMap == null) {
         setAccessToken(mapboxgl, accessToken)
+        currentContainerId = containerId
 
         currentMap = createMapInstance(
             mapboxGlObj = mapboxgl,
-            container = containerId,
+            container = containerId.toJsString(),
             style = "mapbox://styles/mapbox/streets-v12",
             lon = longitude,
             lat = latitude,
@@ -396,6 +461,14 @@ fun initializeMap(
         )
     } else {
         resizeMap()
+    }
+}
+
+fun destroyMap(containerId: String? = null) {
+    currentMap?.let {
+        removeMapInstance(it)
+        currentMap = null
+        currentContainerId = null
     }
 }
 
@@ -416,13 +489,16 @@ fun updateMapData(
         "[$lon,$lat]"
     }
 
+    val hasDest = (destLon != null && destLat != null)
+
     updateMarkersAndRouteJS(
         mapboxGlObj = mapboxgl,
         mapObj = map,
         riderLon = riderLon,
         riderLat = riderLat,
-        destLon = destLon,
-        destLat = destLat,
+        hasDest = hasDest,
+        destLon = destLon ?: 0.0,
+        destLat = destLat ?: 0.0,
         coordinatesJson = jsonArray
     )
 }

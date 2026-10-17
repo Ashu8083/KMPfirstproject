@@ -45,6 +45,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.smart.dashmate.data.models.GetRouteRequest
@@ -57,7 +58,9 @@ import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
 @Composable
-fun MapScreen() {
+fun MapScreen(
+    onBack: () -> Unit = {}
+) {
     val routeViewModel: RouteViewModel = koinInject()
     val scope = rememberCoroutineScope()
 
@@ -135,6 +138,16 @@ fun MapScreen() {
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    Button(
+                        onClick = onBack,
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    ) {
+                        Text("← Back", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
                     Box(
                         modifier = Modifier
                             .size(12.dp)
@@ -584,3 +597,4 @@ fun MapScreen() {
     }
 
 }
+

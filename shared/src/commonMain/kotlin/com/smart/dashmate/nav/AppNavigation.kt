@@ -1,28 +1,56 @@
 package com.smart.dashmate.nav
 
 import androidx.compose.runtime.Composable
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import com.smart.dashmate.presentation.screen.MapScreen
 import com.smart.dashmate.presentation.screen.RiderScreen
-
+import com.smart.dashmate.presentation.screen.TripScreen
 
 @Composable
 fun AppNavigation() {
-    val navController = rememberNavController()
+    var screenStack by remember { mutableStateOf(listOf("riderScreen")) }
+    val currentScreen = screenStack.lastOrNull() ?: "riderScreen"
 
-    NavHost(navController, startDestination = "riderScreen") {
-        composable("riderScreen") {
-            RiderScreen(onLoginSuccess = {
-                    navController.navigate("map")
+    fun navigateTo(route: String) {
+        screenStack = screenStack + route
+    }
+
+    fun goBack() {
+        if (screenStack.size > 1) {
+            screenStack = screenStack.dropLast(1)
+        } else {
+            screenStack = listOf("riderScreen")
+        }
+    }
+
+    when (currentScreen) {
+        "riderScreen" -> {
+            RiderScreen(
+                onLoginSuccess = {
+                    navigateTo("map")
                 },
+                onSuccess = {
+                    navigateTo("trip")
+                }
             )
         }
-        composable("map") {
-            MapScreen()
+        "map" -> {
+            MapScreen(
+                onBack = {
+                    goBack()
+                }
+            )
         }
-
+        "trip" -> {
+            TripScreen(
+                onBack = {
+                    goBack()
+                }
+            )
+        }
     }
 }
 

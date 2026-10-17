@@ -9,7 +9,7 @@ import com.smart.dashmate.data.models.RoutePoint
 @Composable
 expect fun RiderMap(
     modifier: Modifier = Modifier,
-    riderLocation: Location,
+    riderLocation: Location?,
     destinationLocation: Location?,
     route: List<RoutePoint>,
     is3D: Boolean = true,

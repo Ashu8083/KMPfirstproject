@@ -9,7 +9,9 @@ import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.close
 import io.ktor.websocket.readText
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlin.uuid.Uuid
@@ -23,6 +25,9 @@ class RiderWebSocketService(
         ignoreUnknownKeys = true
         encodeDefaults = true
     }
+
+    private val _isConnected = MutableStateFlow(false)
+    val isConnected = _isConnected.asStateFlow()
 
     private val _incomingMessages = MutableSharedFlow<RiderWebsocketMessage>(
         extraBufferCapacity = 32
@@ -39,7 +44,9 @@ class RiderWebSocketService(
                 urlString = "ws://localhost:8083/ws/rider?userId=$riderId"
             ) {
                 session = this
+                _isConnected.value = true
                 println("WebSocket connected successfully!")
+                println("Rider ID: $riderId  and session with $session")
                 println("Rider ID: $riderId")
                 for (frame in incoming) {
                     when (frame) {
@@ -64,34 +71,42 @@ class RiderWebSocketService(
                 "WebSocket connection failed: ${e.message}"
             )
             throw e
+        } finally {
+            session = null
+            _isConnected.value = false
+            println("WebSocket session closed and cleared")
         }
     }
-
     suspend fun sendRiderMessage(
-        type : String,
-        payload :JsonObject
-    ){
-
-        println("Inside the sendRiderMessage function")
-        val currentSession = session ?: error("WebSocket connection not established")
-
-        currentSession.send(
-            Frame.Text(
-                json.encodeToString(
-                    RiderWebsocketMessage(type,payload)
-                )
-            )
+        type: String,
+        payload: JsonObject
+    ) {
+        println("Inside sendRiderMessage function")
+        val currentSession = session
+            ?: error("WebSocket connection not established")
+        val message = RiderWebsocketMessage(
+            type = type,
+            payload = payload
         )
+        val text = json.encodeToString(message)
+        println("Sending WebSocket message: $text")
+        currentSession.send(Frame.Text(text))
+        println("WebSocket send completed")
     }
 
     suspend fun disconnect() {
         val currentSession = session ?: return
         println("Disconnecting WebSocket...")
-        currentSession.close(
-            CloseReason(
-                CloseReason.Codes.NORMAL,
-                "Rider disconnected"
+        try {
+            currentSession.close(
+                CloseReason(
+                    CloseReason.Codes.NORMAL,
+                    "Rider disconnected"
+                )
             )
-        )
+        } finally {
+            session = null
+            _isConnected.value = false
+        }
     }
 }

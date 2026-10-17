@@ -78,12 +78,14 @@ kotlin {
         }
         wasmJsMain.dependencies {
             implementation(npm("mapbox-gl", "3.32.0"))
+            implementation(libs.ktor.client.js)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
         }
         jsMain.dependencies {
             implementation(libs.wrappers.browser)
+            implementation(libs.ktor.client.js)
         }
     }
 }

@@ -15,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.tooling.ComposeToolingApi
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -29,13 +30,15 @@ import org.koin.compose.viewmodel.koinViewModel
 @Composable
 fun RiderScreen(
     onLoginSuccess: () -> Unit,
+    onSuccess: () -> Unit
 ) {
 
     var viewModel: RiderViewModel = koinViewModel()
     var riderId by remember {
-        mutableStateOf("")
+        mutableStateOf(viewModel.riderId.toString())
     }
     val scope = rememberCoroutineScope()
+    val isConnected by viewModel.isConnected.collectAsState()
     val message by viewModel.incomingMessages.collectAsState()
     Column(
         modifier = Modifier
@@ -68,11 +71,7 @@ fun RiderScreen(
         AppButton(
             text = "Connect WebSocket",
             onClick = {
-                if (riderId.isNotBlank()) {
-                    viewModel.connectToWebSocket(riderId.trim())
-                } else {
-                    println("Please enter a Rider ID")
-                }
+                viewModel.connectToWebSocket(riderId.trim())
             }
         )
 
@@ -90,10 +89,24 @@ fun RiderScreen(
             Text("Send Location")
         }
 
+        AppButton(
+            text = "Send Message",
+            onClick = {
+            onSuccess()}
+        )
+
+
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text("DashMate Rider")
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = if (isConnected) "🟢 WebSocket Connected" else "🔴 WebSocket Disconnected",
+                color = if (isConnected) Color(0xFF2E7D32) else Color(0xFFC62828)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = message?.type ?: "Waiting for messages..."
             )
